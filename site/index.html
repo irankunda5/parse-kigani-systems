@@ -40,7 +40,17 @@
     instructors &mdash; and gives you a calendar file you can import anywhere.</p>
 
   <div class="card drag">
-    <a class="bm" href="javascript:(function(){var s=document.createElement('script');s.src='https://parse.kigani-systems.com/b.js?'+Date.now();document.body.appendChild(s);})();">Schedule&nbsp;&rarr;&nbsp;Calendar</a>
+    <!--
+      The URL inside a bookmarklet is frozen the moment someone drags it and can
+      never be changed, which makes a single hardcoded hostname the one
+      unfixable failure point in the whole system. So the loader tries the
+      custom domain first and falls back to the workers.dev hostname if it does
+      not answer. That covers a lapsed certificate, a DNS problem, or a future
+      migration off the domain, and it also means the bookmark works today while
+      Universal SSL is still provisioning. A TLS reset fails in about 100ms, so
+      the fallback costs nothing perceptible.
+    -->
+    <a class="bm" href="javascript:(function(){var d=document,l=function(u,f){var s=d.createElement('script');s.src=u+'?'+Date.now();s.onerror=f;d.body.appendChild(s);};l('https://parse.kigani-systems.com/b.js',function(){l('https://parse-kigani-systems.irankundajeanmichel5.workers.dev/b.js');});})();">Schedule&nbsp;&rarr;&nbsp;Calendar</a>
     <p class="hint">Drag this button onto your bookmarks bar. Don't click it here &mdash; it only works on Banner.</p>
     <p class="hint">Bookmarks bar hidden? <code>Ctrl+Shift+B</code>, or <code>&#8984;+Shift+B</code> on a Mac.</p>
   </div>

@@ -8,7 +8,13 @@ import { readFileSync, statSync } from "node:fs";
 const checks = [
   {
     path: "dist/index.html",
-    assert: (text) => text.includes("parse.kigani-systems.com/b.js") || "landing page is missing the loader URL",
+    assert: (text) => {
+      if (!text.includes("parse.kigani-systems.com/b.js")) return "landing page is missing the primary loader URL";
+      // The fallback is the only thing standing between a lapsed certificate
+      // and every distributed bookmark going dead permanently.
+      if (!text.includes("workers.dev/b.js")) return "landing page is missing the fallback loader URL";
+      return true;
+    },
   },
   {
     path: "dist/b.js",

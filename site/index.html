@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Class schedule to calendar &middot; Kigani Systems</title>
+<meta name="description" content="Turn your Banner class schedule into a calendar file. Runs entirely in your browser.">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 20px 80px;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a; background: #f8fafc;
+  }
+  main { max-width: 660px; margin: 0 auto; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 40px 0 12px; letter-spacing: -0.01em; }
+  p.lede { font-size: 18px; color: #475569; margin: 0 0 32px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; }
+  .drag { text-align: center; }
+  .bm {
+    display: inline-block; background: #1d4ed8; color: #fff; text-decoration: none;
+    padding: 11px 26px; border-radius: 7px; font-weight: 600; cursor: grab;
+  }
+  .bm:hover { background: #1e40af; }
+  .hint { color: #64748b; font-size: 14px; margin: 12px 0 0; }
+  ol { padding-left: 22px; } li { margin: 9px 0; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  .note { border-left: 3px solid #cbd5e1; padding: 2px 0 2px 16px; margin: 18px 0; color: #475569; }
+  .note.warn { border-color: #f59e0b; }
+  footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; }
+  a { color: #1d4ed8; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Put your class schedule on your calendar</h1>
+  <p class="lede">Reads your registered courses straight from Banner &mdash; with rooms and
+    instructors &mdash; and gives you a calendar file you can import anywhere.</p>
+
+  <div class="card drag">
+    <a class="bm" href="javascript:(function(){var s=document.createElement('script');s.src='https://parse.kigani-systems.com/b.js?'+Date.now();document.body.appendChild(s);})();">Schedule&nbsp;&rarr;&nbsp;Calendar</a>
+    <p class="hint">Drag this button onto your bookmarks bar. Don't click it here &mdash; it only works on Banner.</p>
+    <p class="hint">Bookmarks bar hidden? <code>Ctrl+Shift+B</code>, or <code>&#8984;+Shift+B</code> on a Mac.</p>
+  </div>
+
+  <h2>Using it</h2>
+  <ol>
+    <li>Sign in to Banner and open your class schedule so the weekly grid is on screen.</li>
+    <li>Click the <strong>Schedule &rarr; Calendar</strong> bookmark.</li>
+    <li>Check the courses it found, then download the <code>.ics</code> file.</li>
+    <li>Import that file into Google Calendar, Apple Calendar, or Outlook.</li>
+  </ol>
+
+  <div class="note warn">
+    <strong>Import into a new calendar, not your main one.</strong>
+    In Google Calendar, create a calendar called something like &ldquo;Classes&rdquo; first, then
+    import into it. If anything looks wrong you can delete the whole calendar in one step,
+    rather than removing a semester of events by hand.
+  </div>
+
+  <h2>Where the dates come from</h2>
+  <p>Meeting patterns, rooms, instructors and term dates all come from Banner's own records,
+    so they match the registrar rather than anything we've guessed.</p>
+  <p>One caveat: Banner reports the term as running through the end of the exam period, not the
+    last day of classes. Events will therefore run a couple of weeks past your final lecture.
+    You can shorten this with the <strong>Classes end</strong> box before downloading.</p>
+
+  <h2>Privacy</h2>
+  <p>Everything happens inside your browser, on the Banner page itself. Your schedule is never
+    uploaded, and we have no server that could receive it. The only thing your browser requests
+    from us is the script that does the work.</p>
+
+  <h2>If it doesn't work</h2>
+  <ul>
+    <li><strong>&ldquo;Your Banner session has expired&rdquo;</strong> &mdash; reload the page, sign in, click the bookmark again.</li>
+    <li><strong>&ldquo;This does not look like a Banner registration page&rdquo;</strong> &mdash; you're on another tab or page; go back to your schedule.</li>
+    <li><strong>Nothing happens</strong> &mdash; make sure you dragged the button to your bookmarks bar rather than copying the page's address.</li>
+  </ul>
+
+  <footer>
+    <a href="https://kigani-systems.com">Kigani Systems</a>
+    &middot; not affiliated with Ellucian or any college
+  </footer>
+</main>
+</body>
+</html>

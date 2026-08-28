@@ -1,0 +1,11 @@
+# The bookmarklet URL is frozen inside every bookmark we hand out and can never
+# be changed. A short TTL on b.js is the only mechanism we have for pushing a
+# fix, so it must not sit in an edge or browser cache for long.
+/b.js
+  Cache-Control: public, max-age=60, must-revalidate
+  Content-Type: application/javascript; charset=utf-8
+  Access-Control-Allow-Origin: *
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

@@ -6,12 +6,13 @@
   "description": "Banner class schedule to .ics, entirely in the browser",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:site && npm run build:b",
+    "build": "npm run build:site && npm run build:b && npm run verify",
     "build:site": "vite build",
     "build:b": "vite build --config vite.b.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify-dist.mjs"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

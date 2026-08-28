@@ -3,104 +3,173 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Class schedule to calendar &middot; Kigani Systems</title>
-<meta name="description" content="Turn your Banner class schedule into a calendar file. Runs entirely in your browser.">
+<title>Schedule &rarr; Calendar</title>
+<meta name="description" content="Your Banner class schedule, on your calendar. Runs entirely in your browser.">
 <style>
-  :root { color-scheme: light; }
+  :root {
+    color-scheme: light;
+    --ink: #1d1d1f;
+    --muted: #6e6e73;
+    --green: #248a3d;
+    --green-bright: #34c759;
+    --hair: #d2d2d7;
+  }
   * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
   body {
-    margin: 0; padding: 48px 20px 80px;
-    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #0f172a; background: #f8fafc;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.5;
   }
-  main { max-width: 660px; margin: 0 auto; }
-  h1 { font-size: 30px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.02em; }
-  h2 { font-size: 18px; margin: 40px 0 12px; letter-spacing: -0.01em; }
-  p.lede { font-size: 18px; color: #475569; margin: 0 0 32px; }
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; }
-  .drag { text-align: center; }
+  main { max-width: 700px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero ------------------------------------------------------------- */
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: clamp(88px, 16vh, 160px) 0 clamp(40px, 7vh, 72px);
+  }
+  .hero::before {
+    content: "";
+    position: absolute; left: 50%; top: 8%;
+    width: 620px; height: 620px; max-width: 130vw;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(52,199,89,.16) 0%, rgba(52,199,89,0) 68%);
+    pointer-events: none; z-index: -1;
+  }
+  h1 {
+    font-size: clamp(40px, 7.5vw, 68px);
+    line-height: 1.06;
+    letter-spacing: -0.035em;
+    font-weight: 650;
+    margin: 0;
+  }
+  h1 em { font-style: normal; color: var(--green); }
+  .sub {
+    font-size: clamp(18px, 2.4vw, 22px);
+    color: var(--muted);
+    letter-spacing: -0.01em;
+    margin: 22px auto 0;
+    max-width: 30ch;
+  }
+
+  /* Drag target ------------------------------------------------------ */
+  .drag { text-align: center; padding: clamp(28px, 5vh, 48px) 0 clamp(64px, 11vh, 104px); }
   .bm {
-    display: inline-block; background: #1d4ed8; color: #fff; text-decoration: none;
-    padding: 11px 26px; border-radius: 7px; font-weight: 600; cursor: grab;
+    display: inline-block;
+    background: var(--green);
+    color: #fff;
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding: 17px 42px;
+    border-radius: 980px;
+    cursor: grab;
+    box-shadow: 0 10px 30px rgba(36,138,61,.28);
+    transition: transform .18s ease, box-shadow .18s ease;
   }
-  .bm:hover { background: #1e40af; }
-  .hint { color: #64748b; font-size: 14px; margin: 12px 0 0; }
-  ol { padding-left: 22px; } li { margin: 9px 0; }
-  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
-  .note { border-left: 3px solid #cbd5e1; padding: 2px 0 2px 16px; margin: 18px 0; color: #475569; }
-  .note.warn { border-color: #f59e0b; }
-  footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; }
-  a { color: #1d4ed8; }
+  .bm:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(36,138,61,.34); }
+  .bm:active { cursor: grabbing; transform: translateY(0); }
+  .arrow { display: block; margin: 0 auto 18px; color: var(--green-bright); }
+  .drag-hint { font-size: 17px; color: var(--muted); margin: 22px 0 0; letter-spacing: -0.01em; }
+  .drag-sub { font-size: 14px; color: var(--muted); opacity: .8; margin: 7px 0 0; }
+
+  /* Steps ------------------------------------------------------------ */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 34px;
+    padding: clamp(48px, 8vh, 76px) 0;
+    border-top: 1px solid var(--hair);
+    text-align: center;
+  }
+  .steps b {
+    display: block;
+    font-size: 13px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--green); margin-bottom: 9px;
+  }
+  .steps p { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 30px; } }
+
+  /* Advice ----------------------------------------------------------- */
+  .advice {
+    border-top: 1px solid var(--hair);
+    padding: clamp(48px, 8vh, 76px) 0;
+    text-align: center;
+  }
+  .advice p { margin: 0; font-size: 19px; letter-spacing: -0.015em; max-width: 34ch; margin-inline: auto; }
+  .advice small { display: block; margin-top: 12px; font-size: 15px; color: var(--muted); }
+
+  /* Footer ----------------------------------------------------------- */
+  footer {
+    border-top: 1px solid var(--hair);
+    padding: 34px 0 72px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); }
+  details { margin-top: 18px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  pre {
+    text-align: left; background: #f5f5f7; border-radius: 12px;
+    padding: 14px; overflow: auto; font-size: 11px; margin: 14px 0 0; color: #1d1d1f;
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>Put your class schedule on your calendar</h1>
-  <p class="lede">Reads your registered courses straight from Banner &mdash; with rooms and
-    instructors &mdash; and gives you a calendar file you can import anywhere.</p>
 
-  <div class="card drag">
+  <section class="hero">
+    <h1>Your classes.<br><em>On your calendar.</em></h1>
+    <p class="sub">Rooms and instructors included. Straight from Banner.</p>
+  </section>
+
+  <section class="drag">
+    <svg class="arrow" width="26" height="34" viewBox="0 0 26 34" fill="none" aria-hidden="true">
+      <path d="M13 33V3M13 3L3 13M13 3l10 10" stroke="currentColor" stroke-width="2.6"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
     <!--
       The URL inside a bookmarklet is frozen the moment someone drags it and can
       never be changed, which makes a single hardcoded hostname the one
-      unfixable failure point in the whole system. So the loader tries the
-      custom domain first and falls back to the workers.dev hostname if it does
-      not answer. That covers a lapsed certificate, a DNS problem, or a future
-      migration off the domain, and it also means the bookmark works today while
-      Universal SSL is still provisioning. A TLS reset fails in about 100ms, so
-      the fallback costs nothing perceptible.
+      unfixable failure point in the whole system. So the loader tries the custom
+      domain first and falls back to the workers.dev hostname if it does not
+      answer. That covers a lapsed certificate, a DNS fault, or a future
+      migration off the domain. A TLS reset fails in about 100ms, so the
+      fallback costs nothing perceptible.
     -->
     <a class="bm" href="javascript:(function(){var d=document,l=function(u,f){var s=d.createElement('script');s.src=u+'?'+Date.now();s.onerror=f;d.body.appendChild(s);};l('https://parse.kigani-systems.com/b.js',function(){l('https://parse-kigani-systems.irankundajeanmichel5.workers.dev/b.js');});})();">Schedule&nbsp;&rarr;&nbsp;Calendar</a>
-    <p class="hint">Drag this button onto your bookmarks bar. Don't click it here &mdash; it only works on Banner.</p>
-    <p class="hint">Bookmarks bar hidden? <code>Ctrl+Shift+B</code>, or <code>&#8984;+Shift+B</code> on a Mac.</p>
-  </div>
+    <p class="drag-hint">Drag this to your bookmarks bar.</p>
+    <p class="drag-sub">Don&rsquo;t click it here &mdash; it only works on Banner.</p>
+  </section>
 
-  <details style="margin-top:18px">
-    <summary style="cursor:pointer;color:#475569;font-size:14px">Prefer not to use a bookmark?</summary>
-    <p class="hint" style="margin-top:10px">On your Banner schedule page press
-      <code>F12</code>, open the Console tab, paste this and press Enter. Chrome may ask you to
-      type <code>allow pasting</code> first.</p>
-    <pre style="background:#f1f5f9;border-radius:6px;padding:12px;overflow:auto;font-size:12px;margin:0"><code>(function(){var d=document,l=function(u,f){var s=d.createElement('script');s.src=u+'?'+Date.now();s.onerror=f;d.body.appendChild(s);};l('https://parse.kigani-systems.com/b.js',function(){l('https://parse-kigani-systems.irankundajeanmichel5.workers.dev/b.js');});})();</code></pre>
-  </details>
+  <section class="steps">
+    <div><b>One</b><p>Open your schedule in Banner.</p></div>
+    <div><b>Two</b><p>Click the bookmark.</p></div>
+    <div><b>Three</b><p>Download and import.</p></div>
+  </section>
 
-  <h2>Using it</h2>
-  <ol>
-    <li>Sign in to Banner and open your class schedule so the weekly grid is on screen.</li>
-    <li>Click the <strong>Schedule &rarr; Calendar</strong> bookmark.</li>
-    <li>Check the courses it found, then download the <code>.ics</code> file.</li>
-    <li>Import that file into Google Calendar, Apple Calendar, or Outlook.</li>
-  </ol>
-
-  <div class="note warn">
-    <strong>Import into a new calendar, not your main one.</strong>
-    In Google Calendar, create a calendar called something like &ldquo;Classes&rdquo; first, then
-    import into it. If anything looks wrong you can delete the whole calendar in one step,
-    rather than removing a semester of events by hand.
-  </div>
-
-  <h2>Where the dates come from</h2>
-  <p>Meeting patterns, rooms, instructors and term dates all come from Banner's own records,
-    so they match the registrar rather than anything we've guessed.</p>
-  <p>One caveat: Banner reports the term as running through the end of the exam period, not the
-    last day of classes. Events will therefore run a couple of weeks past your final lecture.
-    You can shorten this with the <strong>Classes end</strong> box before downloading.</p>
-
-  <h2>Privacy</h2>
-  <p>Everything happens inside your browser, on the Banner page itself. Your schedule is never
-    uploaded, and we have no server that could receive it. The only thing your browser requests
-    from us is the script that does the work.</p>
-
-  <h2>If it doesn't work</h2>
-  <ul>
-    <li><strong>&ldquo;Your Banner session has expired&rdquo;</strong> &mdash; reload the page, sign in, click the bookmark again.</li>
-    <li><strong>&ldquo;This does not look like a Banner registration page&rdquo;</strong> &mdash; you're on another tab or page; go back to your schedule.</li>
-    <li><strong>Nothing happens</strong> &mdash; make sure you dragged the button to your bookmarks bar rather than copying the page's address.</li>
-  </ul>
+  <section class="advice">
+    <p>Import into a second calendar &mdash; never your main one.</p>
+    <small>In Google Calendar, make a new calendar called &ldquo;Classes&rdquo; first.<br>
+      Then one click undoes everything.</small>
+  </section>
 
   <footer>
-    <a href="https://kigani-systems.com">Kigani Systems</a>
-    &middot; not affiliated with Ellucian or any college
+    Runs entirely in your browser. Nothing is uploaded.
+    <details>
+      <summary>No bookmarks bar?</summary>
+      <p style="font-size:13px">On your Banner schedule page press <code>F12</code>, open Console,
+        paste this, press Enter. Chrome may ask you to type <code>allow pasting</code> first.</p>
+      <pre><code>(function(){var d=document,l=function(u,f){var s=d.createElement('script');s.src=u+'?'+Date.now();s.onerror=f;d.body.appendChild(s);};l('https://parse.kigani-systems.com/b.js',function(){l('https://parse-kigani-systems.irankundajeanmichel5.workers.dev/b.js');});})();</code></pre>
+    </details>
+    <p style="margin-top:26px"><a href="https://kigani-systems.com">Kigani Systems</a></p>
   </footer>
+
 </main>
 </body>
 </html>

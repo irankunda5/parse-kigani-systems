@@ -88,10 +88,17 @@ function countOccurrences(first: Date, last: Date, days: number[], cap: number):
  * the existing events instead of creating a second copy of every class. This
  * is the difference between a student being able to re-run after a schedule
  * change and them ending up with a duplicated calendar.
+ *
+ * startDate is part of the key because a single CRN can publish two patterns
+ * that share a weekday and start time but run over different date ranges — a
+ * course that changes room at the midpoint of the term is the common case.
+ * Without it both patterns produce the same UID and the calendar client keeps
+ * only one, silently dropping half the semester.
  */
 function uid(meeting: Meeting): string {
   const dayKey = meeting.days.map((d) => ICS_DAY[d]).join("") || "NONE";
-  return `${meeting.term}-${meeting.crn}-${meeting.beginTime}-${dayKey}@parse.kigani-systems.com`;
+  const from = formatLocalStamp(meeting.startDate, 0, 0).slice(0, 8);
+  return `${meeting.term}-${meeting.crn}-${from}-${meeting.beginTime}-${dayKey}@parse.kigani-systems.com`;
 }
 
 function summaryOf(meeting: Meeting): string {

@@ -131,12 +131,18 @@ function locationOf(meeting: BannerMeetingTime): string | null {
 
 export function normaliseMeeting(
   identity: CourseIdentity,
-  meeting: BannerMeetingTime,
+  meeting: BannerMeetingTime | null | undefined,
   faculty: string[],
 ): Meeting | { skip: string } {
+  // Banner has been observed to return an fmt entry with no meetingTime at all.
+  // Indexing into it directly throws a TypeError that escapes as "Something
+  // went wrong", so treat a missing object as a skip like any other.
+  if (!meeting) return { skip: "no meeting information published" };
+
   const days = DAY_FIELDS.map((field, index) => (meeting[field] ? index : -1)).filter((i) => i >= 0);
   if (days.length === 0) return { skip: "no weekly meeting pattern (online or arranged)" };
   if (!meeting.beginTime || !meeting.endTime) return { skip: "no meeting time listed" };
+  if (!meeting.startDate || !meeting.endDate) return { skip: "no term dates listed" };
 
   return {
     crn: identity.crn,
@@ -162,12 +168,70 @@ export interface ExtractDeps {
   apiBase: string;
   fetchImpl: typeof fetch;
   onProgress?: (done: number, total: number) => void;
+  /** Per-request budget. Banner occasionally stalls rather than erroring. */
+  timeoutMs?: number;
+  attempts?: number;
+  sleep?: (ms: number) => Promise<void>;
+}
+
+const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_ATTEMPTS = 3;
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * One request, with a hard time budget.
+ *
+ * Without this a stalled connection leaves the panel showing "Looking up
+ * meeting times… 3/8" forever, which is indistinguishable from a hung browser
+ * and gives the student nothing to act on.
+ */
+async function fetchOnce(deps: ExtractDeps, url: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+  try {
+    const response = await deps.fetchImpl(url, {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      signal: controller.signal,
+    });
+    const body = await response.text();
+    // Checked before the status code: an expired CAS session answers 200 with
+    // an HTML login page, so status alone would look like success.
+    assertJson(response, body);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return body;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Retries transient faults only. An expired session is not transient — retrying
+ * it three times just delays a message the student needs immediately.
+ */
+async function fetchWithRetry(deps: ExtractDeps, url: string): Promise<string> {
+  const attempts = deps.attempts ?? DEFAULT_ATTEMPTS;
+  const sleep = deps.sleep ?? defaultSleep;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fetchOnce(deps, url);
+    } catch (error) {
+      if (error instanceof CalensError) throw error;
+      lastError = error;
+      if (attempt < attempts) await sleep(250 * attempt);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 export async function extract(deps: ExtractDeps): Promise<ExtractResult> {
   const identities = courseIdentities(readScheduleEvents(deps.storage));
   const meetings: Meeting[] = [];
   const skipped: SkippedCourse[] = [];
+  const failed: SkippedCourse[] = [];
 
   // Sequential on purpose. Eight requests at ~80ms is under a second, and a
   // burst of parallel authenticated requests against a university SSO-fronted
@@ -179,44 +243,59 @@ export async function extract(deps: ExtractDeps): Promise<ExtractResult> {
       `?term=${encodeURIComponent(identity.term)}` +
       `&courseReferenceNumber=${encodeURIComponent(identity.crn)}`;
 
-    const response = await deps.fetchImpl(url, {
-      credentials: "same-origin",
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-    });
-    const body = await response.text();
-    assertJson(response, body);
-
-    let payload: BannerFmtResponse;
     try {
-      payload = JSON.parse(body) as BannerFmtResponse;
-    } catch {
-      throw new CalensError(
-        `Could not read meeting times for CRN ${identity.crn}.`,
-        "Reload the page and try again.",
-      );
-    }
+      const body = await fetchWithRetry(deps, url);
 
-    const entries = payload.fmt ?? [];
-    if (entries.length === 0) {
-      skipped.push({ crn: identity.crn, title: identity.title, reason: "no meeting times published" });
-    }
-
-    for (const entry of entries) {
-      const faculty = (entry.faculty ?? []).map((f) => f.displayName).filter(Boolean);
-      const result = normaliseMeeting(identity, entry.meetingTime, faculty);
-      if ("skip" in result) {
-        skipped.push({ crn: identity.crn, title: identity.title, reason: result.skip });
-      } else {
-        meetings.push(result);
+      let payload: BannerFmtResponse;
+      try {
+        payload = JSON.parse(body) as BannerFmtResponse;
+      } catch {
+        throw new Error("response was not valid JSON");
       }
+
+      const entries = payload.fmt ?? [];
+      if (entries.length === 0) {
+        skipped.push({ crn: identity.crn, title: identity.title, reason: "no meeting times published" });
+      }
+
+      for (const entry of entries) {
+        const faculty = (entry?.faculty ?? []).map((f) => f?.displayName).filter(Boolean) as string[];
+        const result = normaliseMeeting(identity, entry?.meetingTime, faculty);
+        if ("skip" in result) {
+          skipped.push({ crn: identity.crn, title: identity.title, reason: result.skip });
+        } else {
+          meetings.push(result);
+        }
+      }
+    } catch (error) {
+      // A dead session kills every subsequent request too, so surface it now
+      // rather than grinding through the remaining courses to say the same
+      // thing eight times.
+      if (error instanceof CalensError) throw error;
+
+      // Anything else is isolated to this course. Seven correct classes plus a
+      // visible warning about the eighth beats failing the whole download.
+      failed.push({
+        crn: identity.crn,
+        title: identity.title,
+        reason: error instanceof Error ? error.message : String(error),
+      });
     }
 
     deps.onProgress?.(++done, identities.length);
+  }
+
+  if (meetings.length === 0 && failed.length > 0) {
+    throw new CalensError(
+      "Could not load any of your courses from Banner.",
+      "Reload the page and try again. If it keeps happening, Banner may be down.",
+    );
   }
 
   return {
     termCode: identities[0]?.term ?? "",
     meetings,
     skipped,
+    failed,
   };
 }

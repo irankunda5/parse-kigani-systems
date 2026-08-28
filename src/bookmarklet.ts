@@ -28,7 +28,8 @@ async function main(): Promise<void> {
     } else {
       overlay.showError(
         "Something went wrong reading your schedule.",
-        error instanceof Error ? error.message : String(error),
+        "Click Copy details and send it over, then try again.",
+        error instanceof Error ? `${error.name}: ${error.message}\n${error.stack ?? ""}` : String(error),
       );
     }
   }

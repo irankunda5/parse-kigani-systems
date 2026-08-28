@@ -1,4 +1,20 @@
+import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
+
+// Stamped into the bundle so a bug report can be tied to an exact build.
+// Without it, "it didn't work" is unanswerable: b.js has a 60 second TTL and
+// changes underneath users, so there is otherwise no way to know what they ran.
+function buildId(): string {
+  const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+  try {
+    const sha = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+    return `${stamp} ${sha}`;
+  } catch {
+    return `${stamp} nogit`;
+  }
+}
 
 // b.js is injected into the Banner page by the loader bookmarklet.
 //
@@ -9,6 +25,9 @@ import { defineConfig } from "vite";
 //   - Filename must be literally "b.js" forever, because that URL is frozen
 //     inside every bookmark we distribute and can never be changed
 export default defineConfig({
+  define: {
+    __BUILD_ID__: JSON.stringify(buildId()),
+  },
   build: {
     outDir: "dist",
     emptyOutDir: false,

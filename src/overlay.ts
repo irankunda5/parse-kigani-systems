@@ -1,5 +1,6 @@
 import type { ExtractResult, Meeting } from "./types";
 import { buildCalendar } from "./ics";
+import { BUILD_ID } from "./build";
 
 const HOST_ID = "calens-overlay-host";
 const DAY_LABEL = ["U", "M", "T", "W", "R", "F", "S"];
@@ -71,9 +72,40 @@ function isoDate(date: Date): string {
 
 export interface Overlay {
   setStatus(message: string): void;
-  showError(message: string, hint: string): void;
+  showError(message: string, hint: string, detail?: string): void;
   showResult(result: ExtractResult): void;
   close(): void;
+}
+
+/**
+ * Assembled only when the student clicks "Copy details", and only into their
+ * clipboard. Nothing is transmitted anywhere.
+ *
+ * With no telemetry there is no other way to learn what broke for someone, and
+ * "it didn't work" from a stranger is not actionable. CRNs are public course
+ * identifiers, not personal data; no titles, names or times are included.
+ */
+function diagnostics(message: string, detail: string | undefined): string {
+  const lines = [
+    `build:    ${BUILD_ID}`,
+    `page:     ${location.origin}${location.pathname}`,
+    `agent:    ${navigator.userAgent}`,
+    `error:    ${message}`,
+  ];
+  try {
+    const raw = sessionStorage.getItem("classScheduleEvents");
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (Array.isArray(parsed)) {
+      const crns = [...new Set(parsed.map((e: { crn?: string }) => e?.crn).filter(Boolean))];
+      lines.push(`entries:  ${parsed.length}`, `crns:     ${crns.join(", ")}`);
+    } else {
+      lines.push("entries:  none");
+    }
+  } catch {
+    lines.push("entries:  unreadable");
+  }
+  if (detail) lines.push("", detail);
+  return lines.join("\n");
 }
 
 export function openOverlay(): Overlay {
@@ -120,16 +152,27 @@ export function openOverlay(): Overlay {
       if (el) el.textContent = message;
     },
 
-    showError(message, hint) {
+    showError(message, hint, detail) {
       shell(
         `${header("")}<div class="body">
            <div class="note err"><strong>${esc(message)}</strong><br>${esc(hint)}</div>
-         </div>`,
+         </div>
+         <footer>
+           <span class="sub">${esc(BUILD_ID)}</span>
+           <button class="go" id="copy">Copy details</button>
+         </footer>`,
       );
+      const button = backdrop.querySelector<HTMLButtonElement>("#copy")!;
+      button.addEventListener("click", () => {
+        void navigator.clipboard.writeText(diagnostics(message, detail)).then(
+          () => (button.textContent = "Copied"),
+          () => (button.textContent = "Copy failed"),
+        );
+      });
     },
 
     showResult(result) {
-      const { meetings, skipped } = result;
+      const { meetings, skipped, failed } = result;
       if (meetings.length === 0) {
         this.showError(
           "No classes with meeting times were found.",
@@ -167,6 +210,18 @@ export function openOverlay(): Overlay {
               .map((s) => `${esc(s.title || s.crn)} (${esc(s.reason)})`)
               .join("; ")}</div>`;
 
+      // Deliberately louder than the skipped note. A skipped async course is
+      // expected; a failed lookup means a class the student is registered for
+      // is missing from the file they are about to trust.
+      const failedNote =
+        failed.length === 0
+          ? ""
+          : `<div class="note err"><strong>Could not load ${failed.length}
+              ${failed.length === 1 ? "course" : "courses"}:</strong> ${failed
+                .map((f) => esc(f.title || f.crn))
+                .join(", ")}.
+              These are missing from the download. Close this and click the bookmark again to retry.</div>`;
+
       shell(
         `${header(`${meetings.length} meeting patterns`)}
          <div class="body">
@@ -174,6 +229,7 @@ export function openOverlay(): Overlay {
              <thead><tr><th>Course</th><th>Days</th><th>Time</th><th>Where</th><th>Instructor</th></tr></thead>
              <tbody>${rows}</tbody>
            </table>
+           ${failedNote}
            ${skippedNote}
            <div class="note">
              <strong>Import into a new calendar, not your main one.</strong>

@@ -152,3 +152,76 @@ describe("extract", () => {
     expect(result.skipped[0]!.reason).toMatch(/no weekly meeting pattern/);
   });
 });
+
+describe("resilience", () => {
+  const deps = (fetchImpl: typeof fetch, extra = {}) => ({
+    storage: fakeStorage(),
+    apiBase: API_BASE,
+    fetchImpl,
+    sleep: async () => {},
+    ...extra,
+  });
+
+  /**
+   * A single flaky request must not cost the student their whole schedule.
+   * Before this, one transient failure among eight courses aborted everything.
+   */
+  it("isolates a failing course and still returns the rest", async () => {
+    const result = await extract(
+      deps(fakeFetch({ "15870": new Response("boom", { status: 500, headers: { "content-type": "application/json" } }) })),
+    );
+    expect(result.meetings).toHaveLength(7);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0]!.crn).toBe("15870");
+  });
+
+  it("retries a transient failure and succeeds", async () => {
+    let calls = 0;
+    const flaky = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const crn = new URL(String(input)).searchParams.get("courseReferenceNumber");
+      if (crn === "10098" && ++calls < 3) throw new TypeError("NetworkError");
+      return fakeFetch()(input, init);
+    }) as typeof fetch;
+
+    const result = await extract(deps(flaky));
+    expect(calls).toBe(3);
+    expect(result.meetings).toHaveLength(8);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  it("does not retry an expired session", async () => {
+    let calls = 0;
+    const expired = (async () => {
+      calls++;
+      return loginRedirectResponse();
+    }) as typeof fetch;
+
+    await expect(extract(deps(expired))).rejects.toThrow(/session has expired/);
+    // One attempt, not three: retrying a dead session only delays the message.
+    expect(calls).toBe(1);
+  });
+
+  it("aborts a request that exceeds the time budget", async () => {
+    const hang = (async (_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      })) as typeof fetch;
+
+    await expect(extract(deps(hang, { timeoutMs: 10, attempts: 1 }))).rejects.toThrow(
+      /Could not load any of your courses/,
+    );
+  });
+
+  it("fails loudly when every course fails rather than downloading an empty file", async () => {
+    const dead = (async () => new Response("{}", { status: 503, headers: { "content-type": "application/json" } })) as typeof fetch;
+    await expect(extract(deps(dead, { attempts: 1 }))).rejects.toThrow(/Could not load any of your courses/);
+  });
+
+  it("survives an fmt entry with no meetingTime object", async () => {
+    const malformed = { fmt: [{ courseReferenceNumber: "15870", faculty: [] }] };
+    const result = await extract(deps(fakeFetch({ "15870": jsonResponse(malformed) })));
+    expect(result.meetings).toHaveLength(7);
+    expect(result.skipped[0]!.reason).toMatch(/no meeting information/);
+    expect(result.failed).toHaveLength(0);
+  });
+});

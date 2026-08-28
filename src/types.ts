@@ -101,5 +101,8 @@ export interface SkippedCourse {
 export interface ExtractResult {
   termCode: string;
   meetings: Meeting[];
+  /** Expected omissions: async courses, sections with no published times. */
   skipped: SkippedCourse[];
+  /** Unexpected failures for individual courses. Never silent. */
+  failed: SkippedCourse[];
 }

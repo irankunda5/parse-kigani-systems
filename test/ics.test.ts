@@ -169,3 +169,40 @@ describe("RFC 5545 conformance", () => {
     expect(ics.split("BEGIN:VEVENT").length - 1).toBe(8);
   });
 });
+
+describe("split meeting patterns under one CRN", () => {
+  /**
+   * A course that changes room at the midpoint publishes two fmt entries with
+   * identical weekdays and start times but different date ranges. Keying the
+   * UID on CRN + time + days alone made them collide, and a calendar client
+   * keeping one UID silently discarded half the term.
+   */
+  const firstHalf: Meeting = {
+    ...({} as Meeting),
+    crn: "10098", term: "202604", title: "Thermofluid Mechanics",
+    subject: "ENGR", courseNumber: "041", days: [1, 3, 5],
+    beginTime: "0930", endTime: "1020",
+    startDate: parseBannerDate("08/31/2026"), endDate: parseBannerDate("10/16/2026"),
+    location: "Singer Hall 221", instructors: ["Loh, Kristine"], meetingTypeDescription: "Class",
+  };
+  const secondHalf: Meeting = {
+    ...firstHalf,
+    startDate: parseBannerDate("10/19/2026"), endDate: parseBannerDate("12/19/2026"),
+    location: "Kohlberg Hall 226",
+  };
+
+  it("gives the two halves distinct UIDs", () => {
+    const out = buildCalendar([firstHalf, secondHalf], { now: NOW });
+    const uids = [...out.matchAll(/^UID:(.+)$/gm)].map((m) => m[1]);
+    expect(uids).toHaveLength(2);
+    expect(new Set(uids).size).toBe(2);
+  });
+
+  it("keeps both rooms and both date ranges", () => {
+    const out = buildCalendar([firstHalf, secondHalf], { now: NOW });
+    expect(out).toContain("LOCATION:Singer Hall 221");
+    expect(out).toContain("LOCATION:Kohlberg Hall 226");
+    expect(out).toContain("UNTIL=20261017T035959Z");
+    expect(out).toContain("UNTIL=20261220T045959Z");
+  });
+});

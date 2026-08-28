@@ -15,6 +15,7 @@
     "verify": "node scripts/verify-dist.mjs"
   },
   "devDependencies": {
+    "@types/node": "^22.20.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
     "vitest": "^2.1.4"

@@ -1,24 +1,23 @@
 {
-  // Static assets are matched first; anything that is not a file in dist/
-  // falls through to the Worker, which handles /api/* and /admin.
-  //
-  // Deploy command remains `npx wrangler deploy`. Setting it explicitly is what
-  // stops Workers Builds trying to auto-configure this as a Vite application.
-  "name": "parse-kigani-systems",
-  "main": "worker/index.ts",
-  "compatibility_date": "2026-08-27",
-  "assets": {
-    "directory": "./dist"
-  },
-  "observability": {
-    "enabled": true
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "calens",
-      // Replaced by the id printed by `npx wrangler d1 create calens`.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
-    }
-  ]
+	// Static assets are matched first; anything that is not a file in dist/
+	// falls through to the Worker, which handles /api/* and /admin.
+	//
+	// Deploy command remains `npx wrangler deploy`. Setting it explicitly is what
+	// stops Workers Builds trying to auto-configure this as a Vite application.
+	"name": "parse-kigani-systems",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-08-27",
+	"assets": {
+		"directory": "./dist"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "calens",
+			"database_id": "dd67c90c-bb18-4088-9a56-0d5a8e0253a8"
+		}
+	]
 }

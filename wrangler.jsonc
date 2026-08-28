@@ -1,0 +1,15 @@
+{
+  // Assets-only Worker: no "main" field, so there is no Worker script and
+  // Cloudflare simply serves the built directory as a static site.
+  //
+  // This file exists so that Workers Builds uses an explicit deploy command
+  // (`npx wrangler deploy`) instead of trying to auto-detect the project as a
+  // Vite-based Worker. That auto-detection requires Vite 6 plus
+  // @cloudflare/vite-plugin and would build this as an application rather than
+  // a static site, which is not what we want.
+  "name": "parse-kigani-systems",
+  "compatibility_date": "2026-08-27",
+  "assets": {
+    "directory": "./dist"
+  }
+}

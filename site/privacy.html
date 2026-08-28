@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy &middot; Schedule &rarr; Calendar</title>
+<style>
+  :root { color-scheme: light; --ink:#1d1d1f; --muted:#6e6e73; --green:#248a3d; --hair:#d2d2d7; }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    margin:0; padding:0 24px 96px; color:var(--ink); background:#fff; line-height:1.6;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  main { max-width:640px; margin:0 auto; }
+  h1 { font-size:clamp(32px,6vw,46px); letter-spacing:-.03em; font-weight:650; margin:88px 0 8px; }
+  .sub { color:var(--muted); font-size:19px; letter-spacing:-.01em; margin:0 0 8px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--green);
+       margin:52px 0 12px; }
+  ul { padding-left:20px; margin:0; }
+  li { margin:7px 0; }
+  .box { border:1px solid var(--hair); border-radius:14px; padding:22px 24px; margin-top:14px; }
+  .no li::marker { color:#c7c7cc; }
+  a { color:var(--green); }
+  footer { margin-top:64px; padding-top:22px; border-top:1px solid var(--hair);
+           font-size:13px; color:var(--muted); }
+  button {
+    font:inherit; font-size:15px; font-weight:600; cursor:pointer; margin-top:10px;
+    background:var(--green); color:#fff; border:0; padding:11px 22px; border-radius:980px;
+  }
+  #state { margin-left:12px; color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Privacy</h1>
+  <p class="sub">Short version: your schedule never leaves your browser.</p>
+
+  <h2>What is never sent</h2>
+  <div class="box no">
+    <ul>
+      <li>Your courses, times, rooms, instructors or CRNs</li>
+      <li>Your name, student ID, or anything from your Banner account</li>
+      <li>Your IP address</li>
+      <li>Any identifier that could link one visit to another</li>
+    </ul>
+  </div>
+  <p>The calendar file is built on your own machine and downloaded straight from it.
+     There is no server involved in creating it.</p>
+
+  <h2>What is counted</h2>
+  <div class="box">
+    <ul>
+      <li>That a run happened, and whether it worked</li>
+      <li>Which error occurred, from a fixed list</li>
+      <li>How many courses were found &mdash; the number only</li>
+      <li>Your browser family, and which version of the tool ran</li>
+    </ul>
+  </div>
+  <p>Because nothing identifying is stored, this counts <em>runs</em>, not people.
+     That is a deliberate trade: knowing exactly how many individuals use this
+     is not worth holding data that could identify them.</p>
+
+  <h2>Email, only if you type it</h2>
+  <p>After downloading, there is an optional box for your email address. Nothing is
+     collected unless you fill it in and press Join. It is used to tell you about
+     changes to this tool, nothing else, and it is never shared or sold.
+     To be removed, email <a href="mailto:hello@kigani-systems.com">hello@kigani-systems.com</a>
+     and it is deleted.</p>
+
+  <h2>Opting out</h2>
+  <p>Run the tool, then use the <strong>Opt out</strong> link along the bottom edge of the panel.
+     Counting stops immediately and the tool keeps working exactly as before.</p>
+  <div class="box">
+    <p style="margin:0;font-size:15px;color:var(--muted)">The setting has to live on the Banner
+      page, because that is where the tool runs and browsers keep each site's settings separate.
+      A button here could not reach it &mdash; so there isn't one.</p>
+  </div>
+  <p style="font-size:14px;color:var(--muted)">Stored as a single setting in your browser.
+     Clearing site data resets it, and it does not follow you to another device.</p>
+
+  <footer>
+    <a href="/">&larr; Back</a> &middot; Kigani Systems &middot; not affiliated with any college
+  </footer>
+
+</main>
+
+</body>
+</html>

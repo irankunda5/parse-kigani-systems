@@ -1,6 +1,7 @@
 import type { ExtractResult, Meeting } from "./types";
 import { buildCalendar } from "./ics";
 import { BUILD_ID } from "./build";
+import { isOptedOut, setOptedOut, subscribe as subscribeEmail } from "./telemetry";
 
 const HOST_ID = "calens-overlay-host";
 const DAY_LABEL = ["U", "M", "T", "W", "R", "F", "S"];
@@ -48,6 +49,26 @@ button.go {
 }
 button.go:hover { background: #1e40af; }
 .status { padding: 34px 22px; text-align: center; color: #475569; }
+.fine {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 11px 22px; border-top: 1px solid #f1f5f9;
+  font-size: 12px; color: #94a3b8; background: #fcfcfd;
+  border-radius: 0 0 10px 10px;
+}
+.link {
+  background: none; border: 0; padding: 0; font: inherit;
+  color: #64748b; text-decoration: underline; cursor: pointer;
+}
+.signup { display: none; align-items: center; gap: 8px; width: 100%; }
+.signup.on { display: flex; }
+.signup input {
+  flex: 1; min-width: 0; font: inherit; font-size: 13px;
+  padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a;
+}
+.signup button {
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  background: #248a3d; color: #fff; border: 0; padding: 7px 14px; border-radius: 6px;
+}
 `;
 
 function esc(text: string): string {
@@ -243,14 +264,52 @@ export function openOverlay(): Overlay {
            </label>
            <span class="sub">Banner lists the term through ${isoDate(defaultLast)} (end of exams).</span>
            <button class="go" id="dl">Download .ics</button>
-         </footer>`,
+         </footer>
+         <div class="fine" id="fine">
+           <span id="finetext">Anonymous counts help me fix bugs. Never your schedule.</span>
+           <button class="link" id="optout">${isOptedOut() ? "Opt back in" : "Opt out"}</button>
+           <span class="signup" id="signup">
+             <input type="email" id="email" placeholder="Email for updates (optional)"
+                    autocomplete="email" spellcheck="false">
+             <button id="join">Join</button>
+           </span>
+         </div>`,
       );
 
       const lastInput = backdrop.querySelector<HTMLInputElement>("#last")!;
+      const signup = backdrop.querySelector<HTMLElement>("#signup")!;
+
       backdrop.querySelector<HTMLButtonElement>("#dl")!.addEventListener("click", () => {
         const [y, m, d] = lastInput.value.split("-").map(Number);
         const lastDate = new Date(Date.UTC(y!, m! - 1, d!));
         download(meetings, lastDate, result.termCode);
+        // Only offered once they have what they came for. Asking before then
+        // is a toll gate on a free tool.
+        signup.classList.add("on");
+      });
+
+      const optOut = backdrop.querySelector<HTMLButtonElement>("#optout")!;
+      optOut.addEventListener("click", () => {
+        const next = !isOptedOut();
+        setOptedOut(next);
+        optOut.textContent = next ? "Opt back in" : "Opt out";
+        backdrop.querySelector("#finetext")!.textContent = next
+          ? "Opted out. Nothing will be sent."
+          : "Anonymous counts help me fix bugs. Never your schedule.";
+      });
+
+      const email = backdrop.querySelector<HTMLInputElement>("#email")!;
+      const join = backdrop.querySelector<HTMLButtonElement>("#join")!;
+      join.addEventListener("click", () => {
+        const value = email.value.trim();
+        if (!value) return;
+        join.disabled = true;
+        join.textContent = "\u2026";
+        void subscribeEmail(value).then((ok) => {
+          signup.innerHTML = ok
+            ? "<span>Thanks \u2014 you're on the list.</span>"
+            : "<span>Couldn't save that address.</span>";
+        });
       });
     },
 

@@ -11,10 +11,11 @@
     "build:b": "vite build --config vite.b.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json",
     "verify": "node scripts/verify-dist.mjs"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260828.1",
     "@types/node": "^22.20.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",

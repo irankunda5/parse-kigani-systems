@@ -1,0 +1,19 @@
+{
+  // Separate from the browser config: the Workers runtime and the DOM declare
+  // incompatible versions of Request, Response and friends, so mixing the two
+  // type sets in one project produces noise rather than safety.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["worker"]
+}

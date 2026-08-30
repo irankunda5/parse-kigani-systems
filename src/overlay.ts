@@ -74,6 +74,7 @@ button.go:disabled { background: #94a3b8; cursor: default; }
   color: #64748b; text-decoration: underline; cursor: pointer;
 }
 .fine a { color: #64748b; }
+.mark { font-weight: 650; letter-spacing: -0.02em; color: #a11833; opacity: .85; }
 `;
 
 function esc(text: string): string {
@@ -272,17 +273,18 @@ export function openOverlay(): Overlay {
              ${
                hasGivenEmail()
                  ? ""
-                 : `<input type="email" id="email" placeholder="you@swarthmore.edu"
+                 : `<input type="email" id="email" placeholder="Email for updates (optional)"
                            autocomplete="email" spellcheck="false">`
              }
-             <button class="go" id="dl">${hasGivenEmail() ? "Download .ics" : "Get my calendar"}</button>
+             <button class="go" id="dl">Download .ics</button>
            </span>
          </footer>
          <div class="fine">
+           <span class="mark">parse</span>
            <span id="finetext">${
              hasGivenEmail()
                ? "Your schedule is never uploaded."
-               : "Your email is stored so we can contact you about this tool. Your schedule is never uploaded."
+               : "Email is optional. Your schedule is never uploaded."
            }</span>
            <a href="https://parse.kigani-systems.com/privacy.html" target="_blank" rel="noopener">Privacy</a>
            <button class="link" id="optout">${isOptedOut() ? "Opt back in" : "Opt out of counting"}</button>
@@ -299,9 +301,14 @@ export function openOverlay(): Overlay {
       };
 
       button.addEventListener("click", () => {
-        if (!emailInput) return startDownload();
+        const value = emailInput?.value.trim() ?? "";
 
-        const value = emailInput.value.trim();
+        // Empty is the normal case, not an error: the download is the product
+        // and the mailing list is not a toll on it.
+        if (!emailInput || !value) return startDownload();
+
+        // Only validate once they have actually chosen to type something.
+        // Rejecting a typo is helpful; demanding an address is not.
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
           emailInput.classList.add("bad");
           emailInput.focus();
@@ -313,10 +320,8 @@ export function openOverlay(): Overlay {
 
         void subscribeEmail(value).then((ok) => {
           if (ok) setGivenEmail();
-          // Deliberately fails open. If our own endpoint is unreachable, the
-          // student still gets the calendar they came for — withholding it
-          // because an address could not be recorded would be putting our
-          // mailing list ahead of the thing that is actually useful to them.
+          // Fails open: an unreachable endpoint must not cost the student the
+          // calendar they came for.
           button.disabled = false;
           button.textContent = "Download .ics";
           emailInput.remove();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy &middot; Schedule &rarr; Calendar</title>
+<title>Privacy &middot; parse</title>
 <style>
   :root { color-scheme: light; --ink:#1d1d1f; --muted:#6e6e73; --accent:#a11833; --hair:#d2d2d7; }
   * { box-sizing: border-box; }
@@ -13,7 +13,9 @@
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   main { max-width:640px; margin:0 auto; }
-  h1 { font-size:clamp(32px,6vw,46px); letter-spacing:-.03em; font-weight:650; margin:88px 0 8px; }
+  .wordmark { padding:26px 0 0; font-size:15px; font-weight:650;
+              letter-spacing:-.02em; color:var(--accent); }
+  h1 { font-size:clamp(32px,6vw,46px); letter-spacing:-.03em; font-weight:650; margin:64px 0 8px; }
   .sub { color:var(--muted); font-size:19px; letter-spacing:-.01em; margin:0 0 8px; }
   h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent);
        margin:52px 0 12px; }
@@ -34,8 +36,10 @@
 <body>
 <main>
 
+  <div class="wordmark">parse</div>
+
   <h1>Privacy</h1>
-  <p class="sub">Your schedule never leaves your browser. Your email address is stored.</p>
+  <p class="sub">Your schedule never leaves your browser.</p>
 
   <h2>What is never sent</h2>
   <div class="box no">
@@ -63,9 +67,10 @@
      is not worth holding data that could identify them.</p>
 
   <h2>Your email</h2>
-  <p>You are asked for an email address before downloading, and it is stored.
-     This is <strong>not</strong> anonymous &mdash; an email address identifies you,
-     and we are not going to pretend otherwise.</p>
+  <p>There is an optional box for your email address next to the download button.
+     Leave it empty and nothing is collected; the download works exactly the same.</p>
+  <p>If you do enter one, it is stored, and that is <strong>not</strong> anonymous
+     &mdash; an email address identifies you, and we are not going to pretend otherwise.</p>
   <p>It is used to contact you about this tool: fixes, changes, and problems worth
      knowing about. It is never sold, never shared, and never used for anything else.
      Stored alongside it is the date you signed up and which college's Banner site you

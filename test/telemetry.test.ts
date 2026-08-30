@@ -6,11 +6,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const store = new Map<string, string>();
-vi.stubGlobal("localStorage", {
+const workingStorage = {
   getItem: (k: string) => store.get(k) ?? null,
   setItem: (k: string, v: string) => void store.set(k, v),
   removeItem: (k: string) => void store.delete(k),
-});
+};
+vi.stubGlobal("localStorage", workingStorage);
 vi.stubGlobal("document", { currentScript: { src: "https://parse.kigani-systems.com/b.js?123" } });
 vi.stubGlobal("location", { hostname: "studentregistration.swarthmore.edu" });
 
@@ -25,6 +26,9 @@ const { track, isOptedOut, setOptedOut } = await import("../src/telemetry");
 beforeEach(() => {
   sent.length = 0;
   store.clear();
+  // One test replaces localStorage with a throwing stub; without restoring it
+  // here that stub leaks into every test defined after it.
+  vi.stubGlobal("localStorage", workingStorage);
 });
 
 describe("what leaves the browser", () => {
@@ -84,5 +88,36 @@ describe("opt out", () => {
     expect(isOptedOut()).toBe(true);
     track({ kind: "success", outcome: "ok" });
     expect(sent).toHaveLength(0);
+  });
+});
+
+describe("email gate", () => {
+  it("remembers that someone joined without storing the address", async () => {
+    const { hasGivenEmail, setGivenEmail } = await import("../src/telemetry");
+    expect(hasGivenEmail()).toBe(false);
+    setGivenEmail();
+    expect(hasGivenEmail()).toBe(true);
+    // The flag is all that persists. An address left in the university's
+    // localStorage would be personal data on a machine we do not control.
+    for (const value of store.values()) expect(value).not.toContain("@");
+  });
+
+  it("posts the address only to the subscribe endpoint", async () => {
+    const { subscribe } = await import("../src/telemetry");
+    await subscribe("student@swarthmore.edu");
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.url).toBe("https://parse.kigani-systems.com/api/subscribe");
+    expect(sent[0]!.body).toEqual({
+      email: "student@swarthmore.edu",
+      school: "studentregistration.swarthmore.edu",
+    });
+  });
+
+  it("does not attach the address to usage events", async () => {
+    const { subscribe, track } = await import("../src/telemetry");
+    await subscribe("student@swarthmore.edu");
+    sent.length = 0;
+    track({ kind: "success", outcome: "ok", courses: 8 });
+    expect(JSON.stringify(sent[0]!.body)).not.toContain("@");
   });
 });

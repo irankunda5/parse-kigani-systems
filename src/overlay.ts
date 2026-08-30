@@ -1,7 +1,13 @@
 import type { ExtractResult, Meeting } from "./types";
 import { buildCalendar } from "./ics";
 import { BUILD_ID } from "./build";
-import { isOptedOut, setOptedOut, subscribe as subscribeEmail } from "./telemetry";
+import {
+  hasGivenEmail,
+  isOptedOut,
+  setGivenEmail,
+  setOptedOut,
+  subscribe as subscribeEmail,
+} from "./telemetry";
 
 const HOST_ID = "calens-overlay-host";
 const DAY_LABEL = ["U", "M", "T", "W", "R", "F", "S"];
@@ -44,10 +50,18 @@ footer { display: flex; align-items: center; gap: 12px; padding: 14px 22px; bord
 label { font-size: 13px; color: #475569; display: flex; align-items: center; gap: 7px; }
 input[type=date] { font: inherit; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 5px; }
 button.go {
-  margin-left: auto; background: #1d4ed8; color: #fff; border: 0;
+  background: #248a3d; color: #fff; border: 0;
   padding: 9px 18px; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer;
 }
-button.go:hover { background: #1e40af; }
+button.go:hover { background: #1c6e30; }
+button.go:disabled { background: #94a3b8; cursor: default; }
+.gate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.gate input {
+  font: inherit; font-size: 13px; width: 210px;
+  padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a;
+}
+.gate input.bad { border-color: #dc2626; }
+#copy { margin-left: auto; }
 .status { padding: 34px 22px; text-align: center; color: #475569; }
 .fine {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -59,16 +73,7 @@ button.go:hover { background: #1e40af; }
   background: none; border: 0; padding: 0; font: inherit;
   color: #64748b; text-decoration: underline; cursor: pointer;
 }
-.signup { display: none; align-items: center; gap: 8px; width: 100%; }
-.signup.on { display: flex; }
-.signup input {
-  flex: 1; min-width: 0; font: inherit; font-size: 13px;
-  padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a;
-}
-.signup button {
-  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-  background: #248a3d; color: #fff; border: 0; padding: 7px 14px; border-radius: 6px;
-}
+.fine a { color: #64748b; }
 `;
 
 function esc(text: string): string {
@@ -263,53 +268,70 @@ export function openOverlay(): Overlay {
              <input type="date" id="last" value="${isoDate(defaultLast)}">
            </label>
            <span class="sub">Banner lists the term through ${isoDate(defaultLast)} (end of exams).</span>
-           <button class="go" id="dl">Download .ics</button>
-         </footer>
-         <div class="fine" id="fine">
-           <span id="finetext">Anonymous counts help me fix bugs. Never your schedule.</span>
-           <button class="link" id="optout">${isOptedOut() ? "Opt back in" : "Opt out"}</button>
-           <span class="signup" id="signup">
-             <input type="email" id="email" placeholder="Email for updates (optional)"
-                    autocomplete="email" spellcheck="false">
-             <button id="join">Join</button>
+           <span class="gate">
+             ${
+               hasGivenEmail()
+                 ? ""
+                 : `<input type="email" id="email" placeholder="you@swarthmore.edu"
+                           autocomplete="email" spellcheck="false">`
+             }
+             <button class="go" id="dl">${hasGivenEmail() ? "Download .ics" : "Get my calendar"}</button>
            </span>
+         </footer>
+         <div class="fine">
+           <span id="finetext">${
+             hasGivenEmail()
+               ? "Your schedule is never uploaded."
+               : "Your email is stored so we can contact you about this tool. Your schedule is never uploaded."
+           }</span>
+           <a href="https://parse.kigani-systems.com/privacy.html" target="_blank" rel="noopener">Privacy</a>
+           <button class="link" id="optout">${isOptedOut() ? "Opt back in" : "Opt out of counting"}</button>
          </div>`,
       );
 
       const lastInput = backdrop.querySelector<HTMLInputElement>("#last")!;
-      const signup = backdrop.querySelector<HTMLElement>("#signup")!;
+      const emailInput = backdrop.querySelector<HTMLInputElement>("#email");
+      const button = backdrop.querySelector<HTMLButtonElement>("#dl")!;
 
-      backdrop.querySelector<HTMLButtonElement>("#dl")!.addEventListener("click", () => {
+      const startDownload = () => {
         const [y, m, d] = lastInput.value.split("-").map(Number);
-        const lastDate = new Date(Date.UTC(y!, m! - 1, d!));
-        download(meetings, lastDate, result.termCode);
-        // Only offered once they have what they came for. Asking before then
-        // is a toll gate on a free tool.
-        signup.classList.add("on");
+        download(meetings, new Date(Date.UTC(y!, m! - 1, d!)), result.termCode);
+      };
+
+      button.addEventListener("click", () => {
+        if (!emailInput) return startDownload();
+
+        const value = emailInput.value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+          emailInput.classList.add("bad");
+          emailInput.focus();
+          return;
+        }
+        emailInput.classList.remove("bad");
+        button.disabled = true;
+        button.textContent = "\u2026";
+
+        void subscribeEmail(value).then((ok) => {
+          if (ok) setGivenEmail();
+          // Deliberately fails open. If our own endpoint is unreachable, the
+          // student still gets the calendar they came for — withholding it
+          // because an address could not be recorded would be putting our
+          // mailing list ahead of the thing that is actually useful to them.
+          button.disabled = false;
+          button.textContent = "Download .ics";
+          emailInput.remove();
+          startDownload();
+        });
       });
 
       const optOut = backdrop.querySelector<HTMLButtonElement>("#optout")!;
       optOut.addEventListener("click", () => {
         const next = !isOptedOut();
         setOptedOut(next);
-        optOut.textContent = next ? "Opt back in" : "Opt out";
+        optOut.textContent = next ? "Opt back in" : "Opt out of counting";
         backdrop.querySelector("#finetext")!.textContent = next
-          ? "Opted out. Nothing will be sent."
-          : "Anonymous counts help me fix bugs. Never your schedule.";
-      });
-
-      const email = backdrop.querySelector<HTMLInputElement>("#email")!;
-      const join = backdrop.querySelector<HTMLButtonElement>("#join")!;
-      join.addEventListener("click", () => {
-        const value = email.value.trim();
-        if (!value) return;
-        join.disabled = true;
-        join.textContent = "\u2026";
-        void subscribeEmail(value).then((ok) => {
-          signup.innerHTML = ok
-            ? "<span>Thanks \u2014 you're on the list.</span>"
-            : "<span>Couldn't save that address.</span>";
-        });
+          ? "Opted out of anonymous counts. Your schedule is never uploaded."
+          : "Your schedule is never uploaded.";
       });
     },
 

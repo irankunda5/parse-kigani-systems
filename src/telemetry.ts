@@ -19,6 +19,30 @@ const API_ORIGIN: string = (() => {
   return "https://parse.kigani-systems.com";
 })();
 
+const EMAIL_GIVEN_KEY = "calens-joined";
+
+/**
+ * Only a flag, never the address itself. Knowing that someone already signed up
+ * is enough to avoid asking twice; keeping their email in the university's
+ * localStorage would be storing personal data on a machine we do not control,
+ * for no benefit.
+ */
+export function hasGivenEmail(): boolean {
+  try {
+    return localStorage.getItem(EMAIL_GIVEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setGivenEmail(): void {
+  try {
+    localStorage.setItem(EMAIL_GIVEN_KEY, "1");
+  } catch {
+    /* they will simply be asked again next time */
+  }
+}
+
 export function isOptedOut(): boolean {
   try {
     return localStorage.getItem(OPT_OUT_KEY) === "1";

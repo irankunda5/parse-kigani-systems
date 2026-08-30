@@ -178,7 +178,7 @@ async function dashboard(request: Request, env: Env): Promise<Response> {
  body{font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1d1d1f;
       max-width:900px;margin:40px auto;padding:0 24px}
  h1{font-size:24px;letter-spacing:-.02em;margin:0 0 4px}
- h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#248a3d;margin:34px 0 10px}
+ h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#a11833;margin:34px 0 10px}
  .big{display:flex;gap:36px;margin:22px 0 0;flex-wrap:wrap}
  .big div b{display:block;font-size:30px;font-weight:600;letter-spacing:-.02em}
  .big div span{color:#6e6e73;font-size:13px}

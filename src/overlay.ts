@@ -50,10 +50,10 @@ footer { display: flex; align-items: center; gap: 12px; padding: 14px 22px; bord
 label { font-size: 13px; color: #475569; display: flex; align-items: center; gap: 7px; }
 input[type=date] { font: inherit; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 5px; }
 button.go {
-  background: #248a3d; color: #fff; border: 0;
+  background: #a11833; color: #fff; border: 0;
   padding: 9px 18px; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer;
 }
-button.go:hover { background: #1c6e30; }
+button.go:hover { background: #85142a; }
 button.go:disabled { background: #94a3b8; cursor: default; }
 .gate { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .gate input {

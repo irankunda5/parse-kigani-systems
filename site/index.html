@@ -10,8 +10,8 @@
     color-scheme: light;
     --ink: #1d1d1f;
     --muted: #6e6e73;
-    --green: #248a3d;
-    --green-bright: #34c759;
+    --accent: #a11833;
+    --accent-bright: #d11f41;
     --hair: #d2d2d7;
   }
   * { box-sizing: border-box; }
@@ -36,7 +36,7 @@
     position: absolute; left: 50%; top: 8%;
     width: 620px; height: 620px; max-width: 130vw;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(52,199,89,.16) 0%, rgba(52,199,89,0) 68%);
+    background: radial-gradient(circle, rgba(209,31,65,.15) 0%, rgba(209,31,65,0) 68%);
     pointer-events: none; z-index: -1;
   }
   h1 {
@@ -46,7 +46,7 @@
     font-weight: 650;
     margin: 0;
   }
-  h1 em { font-style: normal; color: var(--green); }
+  h1 em { font-style: normal; color: var(--accent); }
   .sub {
     font-size: clamp(18px, 2.4vw, 22px);
     color: var(--muted);
@@ -59,7 +59,7 @@
   .drag { text-align: center; padding: clamp(28px, 5vh, 48px) 0 clamp(64px, 11vh, 104px); }
   .bm {
     display: inline-block;
-    background: var(--green);
+    background: var(--accent);
     color: #fff;
     text-decoration: none;
     font-size: 19px;
@@ -68,12 +68,12 @@
     padding: 17px 42px;
     border-radius: 980px;
     cursor: grab;
-    box-shadow: 0 10px 30px rgba(36,138,61,.28);
+    box-shadow: 0 10px 30px rgba(161,24,51,.30);
     transition: transform .18s ease, box-shadow .18s ease;
   }
-  .bm:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(36,138,61,.34); }
+  .bm:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(161,24,51,.36); }
   .bm:active { cursor: grabbing; transform: translateY(0); }
-  .arrow { display: block; margin: 0 auto 18px; color: var(--green-bright); }
+  .arrow { display: block; margin: 0 auto 18px; color: var(--accent-bright); }
   .drag-hint { font-size: 17px; color: var(--muted); margin: 22px 0 0; letter-spacing: -0.01em; }
   .drag-sub { font-size: 14px; color: var(--muted); opacity: .8; margin: 7px 0 0; }
 
@@ -89,7 +89,7 @@
   .steps b {
     display: block;
     font-size: 13px; font-weight: 600; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--green); margin-bottom: 9px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 9px;
   }
   .steps p { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
   @media (max-width: 560px) { .steps { grid-template-columns: 1fr; gap: 30px; } }

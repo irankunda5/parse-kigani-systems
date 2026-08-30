@@ -17,6 +17,10 @@ const checks = [
     },
   },
   {
+    path: "dist/privacy.html",
+    assert: (text) => text.includes("Opt out") || "privacy page is missing the opt-out section",
+  },
+  {
     path: "dist/b.js",
     assert: (text) => {
       if (!text.startsWith("(function()")) return "b.js is not an IIFE; it will not run when injected into a page";

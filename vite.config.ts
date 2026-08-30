@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
 // Builds the public landing page at parse.kigani-systems.com.
@@ -9,6 +10,15 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      // Vite only treats index.html as an entry unless told otherwise. Without
+      // this, privacy.html silently never reaches dist/ and the footer link
+      // that documents what we collect returns a 404.
+      input: {
+        index: resolve(__dirname, "site/index.html"),
+        privacy: resolve(__dirname, "site/privacy.html"),
+      },
+    },
   },
   test: {
     globals: true,
